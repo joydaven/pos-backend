@@ -1,0 +1,14 @@
+[Unit]
+Description=Process scheduled payment plan installments
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/staging-pos/woo-ghl-contact-db/backend
+ExecStart=/var/www/staging-pos/woo-ghl-contact-db/backend/venv/bin/python manage.py process_installments
+Environment=DJANGO_SETTINGS_MODULE=doctorsstudio.settings
+
+[Install]
+WantedBy=multi-user.target

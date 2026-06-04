@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - Order #{{ order_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .receipt-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .business-info {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .order-details {
+            margin: 20px 0;
+            font-size: 11px;
+            text-align: center;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .order-details div {
+            margin: 2px 0;
+        }
+        .items-section {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .items-header {
+            background-color: #f0f0f0;
+            padding: 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+        }
+        .items-content {
+            padding: 10px;
+        }
+        .item-row {
+            display: flex;
+            justify-content: flex-start;
+            margin: 5px 0;
+            padding: 5px 0;
+            align-items: center;
+        }
+        .item-details {
+            margin-left: 10px;
+            font-size: 11px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .item-separator {
+            border-bottom: 1px solid #ccc;
+            margin: 8px 0;
+        }
+        .totals-section {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .total-row {
+            display: flex;
+            justify-content: flex-start;
+            margin: 3px 0;
+            align-items: center;
+        }
+        .total-label {
+            text-align: left;
+            width: 120px;
+            margin-right: 15px;
+        }
+        .total-amount {
+            text-align: left;
+        }
+        .total-row.final {
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            margin-top: 10px;
+        }
+        .payments-section {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .payments-header {
+            background-color: #f0f0f0;
+            padding: 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+        }
+        .payments-content {
+            padding: 10px;
+        }
+        .payment-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+        .payment-details {
+            text-align: left;
+            font-size: 11px;
+            margin-left: 10px;
+            color: #555;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            border-top: 1px solid #ccc;
+            padding-top: 15px;
+        }
+        .refund-policy {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .thank-you {
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="header">
+            <div class="logo">DOCTORS STUDIO</div>
+            <div class="business-info">2595 NW Boca Raton Blvd, Suite 200</div>
+            <div class="business-info">Boca Raton, FL 33431</div>
+            <div class="business-info">(561) 444-7751</div>
+            <div class="business-info">www.doctorsstudio.com</div>
+        </div>
+        
+        <div class="order-details">
+            <div><strong>Order #:</strong> {{ order_number }}</div>
+            <div><strong>Date:</strong> {{ timestamp }}</div>
+            {% if customer %}
+            <div><strong>Customer:</strong> {{ customer.first_name }} {{ customer.last_name }}</div>
+            {% if customer.email %}
+            <div style="color: #333;">{{ customer.email }}</div>
+            {% endif %}
+            {% endif %}
+        </div>
+        
+        <div class="items-section">
+            <div class="items-header">Order Items</div>
+            <div class="items-content">
+                {% for item in order_items %}
+                    {# 🔥 DISCOUNT SUPPORT: Check if item has original_price metadata #}
+                    {% if item.metadata.original_price %}
+                        {# Item has discount - show original price and discount line #}
+                    <div class="item-row">
+                        <div style="flex: 1;">
+                            {{ item.name }}{% if item.metadata.variation_name and item.metadata.variation_name not in item.name %} - {{ item.metadata.variation_name }}{% endif %}
+                            {% if item.metadata.brand %} ({{ item.metadata.brand }}){% endif %}
+                        </div>
+                        <div style="margin-left: 15px;">${{ item.original_total|default:item.subtotal|floatformat:2 }}</div>
+                    </div>
+                    <div class="item-details">
+                        <div>Quantity: {{ item.quantity }}
+                            {% if item.metadata.selectSeries and item.metadata.selectSeries > 1 %}
+                                ({{ item.metadata.selectSeries }} Series)
+                            {% endif %}
+                        </div>
+                        {% if item.discount_amount %}
+                        <div style="display: flex; justify-content: flex-start;">
+                            <span>Discount:</span>
+                            <span style="margin-left: 15px;">-${{ item.discount_amount|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="item-separator"></div>
+                    {% else %}
+                        {# No discount - show regular price #}
+                    <div class="item-row">
+                        <div style="flex: 1;">
+                            {{ item.name }}{% if item.metadata.variation_name and item.metadata.variation_name not in item.name %} - {{ item.metadata.variation_name }}{% endif %}
+                            {% if item.metadata.brand %} ({{ item.metadata.brand }}){% endif %}
+                        </div>
+                        <div style="margin-left: 15px;">${{ item.subtotal|floatformat:2 }}</div>
+                    </div>
+                    <div class="item-details">
+                        <div>Quantity: {{ item.quantity }}
+                            {% if item.metadata.selectSeries and item.metadata.selectSeries > 1 %}
+                                ({{ item.metadata.selectSeries }} Series)
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="item-separator"></div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% comment %}
+                Handle bundle products if they exist
+                {% endcomment %}
+                {% for bundle in bundle_products %}
+                    <div class="item-row">
+                        <div style="flex: 1;">{{ bundle.name }}</div>
+                        <div style="margin-left: 15px;">${{ bundle.price|floatformat:2 }}</div>
+                    </div>
+                    <div class="item-details">
+                        <div>Quantity: {{ bundle.quantity }}</div>
+                    </div>
+                    <div class="item-separator"></div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="totals-section">
+            <div class="total-row">
+                <div class="total-label">Sub Total:</div>
+                <div class="total-amount">${{ subtotal|floatformat:2 }}</div>
+            </div>
+            <div class="total-row final">
+                <div class="total-label">Total:</div>
+                <div class="total-amount">${{ total|floatformat:2 }}</div>
+            </div>
+            <div class="total-row">
+                <div class="total-label">Amount Paid:</div>
+                <div class="total-amount">${{ amount_paid|floatformat:2 }}</div>
+            </div>
+            <div class="total-row">
+                <div class="total-label">Balance Due:</div>
+                <div class="total-amount">${{ balance_due|floatformat:2 }}</div>
+            </div>
+        </div>
+        
+        <div class="payments-section">
+            <div class="payments-header">Payments</div>
+            <div class="payments-content">
+                {% if payment_method.type == 'split' and payment_method.splitPayments %}
+                    {% for payment in payment_method.splitPayments %}
+                        <div class="payment-row">
+                            <div>
+                                {% if payment.method.type == 'credit' or payment.method.type == 'debit' %}
+                                    Credit Card
+                                {% else %}
+                                    {{ payment.method.name|default:payment.method.type }}
+                                {% endif %}
+                            </div>
+                            <div style="text-align: right; width: 80px;">${{ payment.amount|floatformat:2 }}</div>
+                        </div>
+                        <div class="payment-details">
+                            {% if customer %}
+                                <div>{{ customer.first_name }} {{ customer.last_name }}</div>
+                            {% endif %}
+                            {% if payment.method.last4 %}
+                                <div>xxxxxxxxxxxx{{ payment.method.last4 }}</div>
+                            {% endif %}
+                            {% if payment.method.brand %}
+                                <div>{{ payment.method.brand }}</div>
+                            {% endif %}
+                            {% if payment.method.authCode %}
+                                <div>Auth Code: {{ payment.method.authCode }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="item-separator"></div>
+                    {% endfor %}
+                {% else %}
+                    <div class="payment-row">
+                        <div>
+                            {% if payment_method.type == 'credit' or payment_method.type == 'debit' %}
+                                Credit Card
+                            {% else %}
+                                {{ payment_method.name|default:payment_method.type }}
+                            {% endif %}
+                        </div>
+                        <div style="text-align: right; width: 80px;">${{ amount_paid|floatformat:2 }}</div>
+                    </div>
+                    <div class="payment-details">
+                        {% if customer %}
+                            <div>{{ customer.first_name }} {{ customer.last_name }}</div>
+                        {% endif %}
+                        {% if payment_method.last4 %}
+                            <div>xxxxxxxxxxxx{{ payment_method.last4 }}</div>
+                        {% endif %}
+                        {% if payment_method.brand %}
+                            <div>{{ payment_method.brand }}</div>
+                        {% endif %}
+                        {% if payment_method.authCode %}
+                            <div>Auth Code: {{ payment_method.authCode }}</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="questions-section" style="background-color:#f9fafb;padding:15px;text-align:center;margin-bottom:15px;border-radius:6px;">
+            <div style="font-size:12px;color:#666;margin-bottom:4px;">Questions about your order?</div>
+            <div style="font-size:13px;color:#333;font-weight:600;">Call us at <strong>(561) 444-7751</strong></div>
+            <div style="font-size:11px;color:#666;margin-top:4px;">or email us at support@doctorsstudio.com</div>
+        </div>
+
+        <div class="footer">
+            <div class="refund-policy">Refund Policy</div>
+            <div>All sales are final. No refunds or exchanges.</div>
+            <div class="thank-you">Thank you for your business!</div>
+        </div>
+    </div>
+</body>
+</html>

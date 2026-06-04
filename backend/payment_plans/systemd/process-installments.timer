@@ -1,0 +1,9 @@
+[Unit]
+Description=Run payment plan installment processing daily at 8am EST
+
+[Timer]
+OnCalendar=*-*-* 13:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
